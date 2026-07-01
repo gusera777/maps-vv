@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GUSERA Maps — Peta Lapangan Tanpa Sinyal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Splash screen -->
+<div class="splash" id="splash">
+  <svg width="64" height="64" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="17" cy="17" r="14.5" fill="none" stroke="#7C9473" stroke-width="1.3"/>
+    <path d="M17 4 L20.2 17 L17 30 L13.8 17 Z" fill="#D98A3D"/>
+    <path d="M4 17 L17 13.8 L30 17 L17 20.2 Z" fill="#E8E6DC" fill-opacity="0.85"/>
+    <circle cx="17" cy="17" r="1.6" fill="#0F1512"/>
+  </svg>
+  <h1>GUSERA MAPS</h1>
+  <p>Peta lapangan tanpa sinyal</p>
+  <span class="splash-loading">Memuat peta tersimpan…</span>
+</div>
+
+<div class="app-shell">
+
+  <header class="topbar">
+    <button class="menu-toggle" id="menuToggle" aria-label="Buka daftar peta">☰</button>
+    <div class="wordmark">
+      <svg width="30" height="30" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="17" cy="17" r="14.5" fill="none" stroke="#7C9473" stroke-width="1.3"/>
+        <path d="M17 4 L20.2 17 L17 30 L13.8 17 Z" fill="#D98A3D"/>
+        <path d="M4 17 L17 13.8 L30 17 L17 20.2 Z" fill="#E8E6DC" fill-opacity="0.85"/>
+        <circle cx="17" cy="17" r="1.6" fill="#0F1512"/>
+      </svg>
+      <div>
+        <h1>GUSERA MAPS</h1>
+        <p class="tagline">Peta lapangan tanpa sinyal — V5 PDF Map + Track + Ukur</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span class="mode-pill"><span class="dot"></span>Mode Lokal</span>
+    <button class="icon-btn" id="btnFullscreen" type="button" aria-label="Layar penuh" title="Layar penuh">⛶</button>
+  </header>
+
+  <div class="body-layout">
+    <div class="sidebar-scrim" id="sidebarScrim"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" id="tabMaps" type="button" data-tab="maps">🗺 Peta</button>
+        <button class="tab-btn" id="tabWaypoints" type="button" data-tab="waypoints">📍 Waypoint</button>
+        <button class="tab-btn" id="tabTracks" type="button" data-tab="tracks">🛤 Track</button>
+      </div>
+
+      <div class="tab-pane active" id="paneMaps">
+        <div class="sidebar-head">
+          <span class="eyebrow">Penyimpanan Lokal</span>
+          <h2>Daftar Peta</h2>
+        </div>
+        <ul class="map-list" id="mapList">
+          <!-- diisi oleh app.js -->
+        </ul>
+        <div class="sidebar-foot">
+          <button class="btn-add" id="btnAddMap" type="button">
+            <span>＋</span> Tambah Peta (PDF)
+          </button>
+          <p class="storage-note">Berkas disimpan di penyimpanan browser perangkat ini. Tidak diunggah ke internet.</p>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="paneWaypoints">
+        <div class="sidebar-head">
+          <span class="eyebrow">Penyimpanan Lokal</span>
+          <h2>Waypoint</h2>
+        </div>
+        <div class="wp-search-wrap">
+          <input type="search" id="wpSearch" class="wp-search" placeholder="Cari nama, kategori, deskripsi…">
+        </div>
+        <ul class="waypoint-list" id="waypointList">
+          <!-- diisi oleh app.js -->
+        </ul>
+        <div class="sidebar-foot">
+          <button class="btn-add" id="btnAddWaypoint" type="button">
+            <span>＋</span> Tambah Waypoint
+          </button>
+          <p class="storage-note">Atau ketuk tombol 📍 di peta lalu ketuk lokasi yang ingin ditandai.</p>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="paneTracks">
+        <div class="sidebar-head">
+          <span class="eyebrow">Penyimpanan Lokal</span>
+          <h2>Track</h2>
+        </div>
+        <ul class="track-list" id="trackList">
+          <!-- diisi oleh app.js -->
+        </ul>
+        <div class="sidebar-foot">
+          <p class="storage-note">Rekam jalur baru lewat tombol 🛤 di peta. Ketuk track di daftar untuk melihat jalurnya.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="map-area">
+      <div id="leafletMap"></div>
+      <div class="map-placeholder" id="mapPlaceholder">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#8FA096" stroke-width="1.4"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></svg>
+        <p>Belum ada peta yang ditampilkan.<br><strong>Tambahkan berkas .pdf</strong> lewat panel di kiri untuk mulai melihat peta secara offline.</p>
+      </div>
+
+      <div class="map-fab-stack">
+        <button class="fab-btn" id="btnGps" type="button" title="Aktifkan GPS" aria-label="Aktifkan GPS">🛰</button>
+        <button class="fab-btn" id="btnFollow" type="button" title="Ikuti posisi saya" aria-label="Ikuti posisi saya" disabled>🎯</button>
+        <button class="fab-btn" id="btnTrack" type="button" title="Rekam track" aria-label="Rekam track">🛤</button>
+        <button class="fab-btn" id="btnCalibrate" type="button" title="Kalibrasi koordinat peta" aria-label="Kalibrasi koordinat peta" disabled>🎯📐</button>
+        <button class="fab-btn" id="btnMeasure" type="button" title="Ukur (jarak/luas/bearing/azimuth)" aria-label="Ukur">📏</button>
+        <button class="fab-btn" id="btnAddWaypointFab" type="button" title="Tambah waypoint di peta" aria-label="Tambah waypoint di peta">📍</button>
+      </div>
+
+      <div class="placement-hint" id="placementHint" hidden>
+        <span>Ketuk lokasi di peta untuk menandai waypoint</span>
+        <button type="button" id="placementCancel" aria-label="Batalkan">✕</button>
+      </div>
+
+      <div class="placement-hint" id="calibrateHint" hidden>
+        <span id="calibrateHintText">Ketuk titik pertama yang koordinat aslinya Anda ketahui</span>
+        <button type="button" id="calibrateCancel" aria-label="Batalkan">✕</button>
+      </div>
+
+      <div class="placement-hint" id="measureHint" hidden>
+        <span id="measureHintText">Ketuk titik-titik di peta untuk mengukur jarak</span>
+        <button type="button" id="measureCancel" aria-label="Batalkan">✕</button>
+      </div>
+
+      <div class="gps-panel" id="gpsPanel" hidden>
+        <div class="gps-panel-head">
+          <div class="compass-dial">
+            <svg viewBox="0 0 60 60" width="50" height="50">
+              <circle cx="30" cy="30" r="27" fill="none" stroke="rgba(232,230,220,0.18)" stroke-width="1.5"/>
+              <text x="30" y="11" text-anchor="middle" font-size="8" fill="#8FA096" font-family="IBM Plex Mono, monospace">U</text>
+              <g id="compassNeedle" transform="rotate(0 30 30)">
+                <path d="M30 8 L34 30 L30 26 L26 30 Z" fill="#D98A3D"/>
+              </g>
+              <circle cx="30" cy="30" r="2" fill="#E8E6DC"/>
+            </svg>
+          </div>
+          <div>
+            <span class="eyebrow">GPS</span>
+            <div class="gps-heading-value" id="gpsHeadingText">— °</div>
+          </div>
+        </div>
+        <dl class="gps-readout">
+          <div><dt>Lat</dt><dd id="gpsLat">—</dd></div>
+          <div><dt>Lon</dt><dd id="gpsLon">—</dd></div>
+          <div><dt>Akurasi</dt><dd id="gpsAccuracy">—</dd></div>
+          <div><dt>Altitude</dt><dd id="gpsAltitude">—</dd></div>
+          <div><dt>Bearing</dt><dd id="gpsBearing">—</dd></div>
+          <div><dt>Speed</dt><dd id="gpsSpeed">—</dd></div>
+        </dl>
+        <p class="gps-status-msg" id="gpsStatusMsg"></p>
+      </div>
+
+      <!-- Panel Track Recorder (V4) -->
+      <div class="track-panel" id="trackPanel" hidden>
+        <div class="track-panel-head">
+          <span class="eyebrow">Track Recorder</span>
+          <span class="track-status-pill" id="trackStatusPill">Siap</span>
+        </div>
+        <dl class="track-readout">
+          <div><dt>Jarak</dt><dd id="trJarak">0 m</dd></div>
+          <div><dt>Waktu</dt><dd id="trWaktu">00:00</dd></div>
+          <div><dt>Kecepatan</dt><dd id="trKecepatan">0 km/h</dd></div>
+        </dl>
+        <div class="track-controls">
+          <button type="button" class="track-btn track-btn-start" id="trBtnStart">🟢 Start</button>
+          <button type="button" class="track-btn" id="trBtnPause" hidden>⏸ Pause</button>
+          <button type="button" class="track-btn" id="trBtnResume" hidden>▶ Resume</button>
+          <button type="button" class="track-btn track-btn-stop" id="trBtnStop" hidden>🔴 Stop</button>
+        </div>
+        <p class="gps-status-msg" id="trStatusMsg"></p>
+      </div>
+
+      <!-- Panel Ukur / Measure (V5) -->
+      <div class="measure-panel" id="measurePanel" hidden>
+        <div class="measure-panel-head">
+          <span class="eyebrow">Ukur</span>
+          <button type="button" class="icon-btn measure-close" id="measureClose" aria-label="Tutup panel ukur" title="Tutup">✕</button>
+        </div>
+
+        <div class="measure-mode-tabs">
+          <button type="button" class="measure-mode-btn active" id="mModeDistance" data-mode="distance">📏<span>Jarak</span></button>
+          <button type="button" class="measure-mode-btn" id="mModeArea" data-mode="area">▱<span>Luas</span></button>
+          <button type="button" class="measure-mode-btn" id="mModeBearing" data-mode="bearing">🧭<span>Bearing</span></button>
+        </div>
+
+        <dl class="measure-readout" id="measureReadoutDistance">
+          <div><dt>Jarak (Polyline)</dt><dd id="mJarak">0 m</dd></div>
+          <div><dt>Titik</dt><dd id="mPointCountD">0</dd></div>
+        </dl>
+        <dl class="measure-readout" id="measureReadoutArea" hidden>
+          <div><dt>Luas (Polygon)</dt><dd id="mLuas">0 m²</dd></div>
+          <div><dt>Keliling</dt><dd id="mKeliling">0 m</dd></div>
+          <div><dt>Titik</dt><dd id="mPointCountA">0</dd></div>
+        </dl>
+        <dl class="measure-readout" id="measureReadoutBearing" hidden>
+          <div><dt>Jarak</dt><dd id="mBJarak">—</dd></div>
+          <div><dt>Azimuth</dt><dd id="mAzimuth">—</dd></div>
+          <div><dt>Bearing</dt><dd id="mBearing">—</dd></div>
+        </dl>
+
+        <div class="measure-controls">
+          <button type="button" class="track-btn" id="mBtnUndo">↩ Undo</button>
+          <button type="button" class="track-btn track-btn-stop" id="mBtnClear">🧹 Hapus</button>
+        </div>
+        <p class="gps-status-msg" id="measureStatusMsg" style="color:var(--ink-dim);"></p>
+      </div>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <div class="status-cell"><span class="s-label">Lat</span><span class="s-value" id="stLat">—</span></div>
+    <div class="status-cell"><span class="s-label">Lon</span><span class="s-value" id="stLon">—</span></div>
+    <div class="status-cell"><span class="s-label">Zoom</span><span class="s-value" id="stZoom">—</span></div>
+    <div class="status-cell"><span class="s-label">Waypoint</span><span class="s-value" id="stWaypointCount">0</span></div>
+    <div class="status-cell"><span class="s-label">Peta Aktif</span><span class="s-value" id="stActiveMap">—</span></div>
+  </footer>
+</div>
+
+<!-- Modal import PDF (V4: menggantikan modal MBTiles) -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>Tambah Peta Offline (PDF)</h3>
+    <p>Pilih berkas <strong>.pdf</strong> peta lapangan Anda. Halaman terpilih akan di-render menjadi gambar & disalin ke penyimpanan lokal browser agar bisa dibuka kembali tanpa koneksi internet.</p>
+
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="application/pdf,.pdf" hidden>
+      <span class="dz-icon">🗂</span>
+      <p><strong>Klik untuk pilih</strong> atau seret berkas .pdf ke sini</p>
+    </label>
+
+    <div class="pdf-preview" id="pdfPreview" hidden>
+      <img id="pdfPreviewImg" alt="Pratinjau halaman PDF">
+      <div class="pdf-preview-controls">
+        <label class="field-label" for="pdfPageSelect">Halaman</label>
+        <select id="pdfPageSelect"></select>
+      </div>
+    </div>
+
+    <div class="modal-progress" id="modalProgress"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modalCancel" type="button">Batal</button>
+      <button class="btn-add" id="modalImport" type="button" hidden>Impor Peta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal tambah/edit waypoint -->
+<div class="modal-backdrop" id="wpModalBackdrop">
+  <div class="modal wp-modal">
+    <h3 id="wpModalTitle">Tambah Waypoint</h3>
+
+    <div class="wp-coord-row">
+      <div>
+        <span class="field-label">Lat</span>
+        <input type="number" step="any" id="wpLat" class="wp-coord-input">
+      </div>
+      <div>
+        <span class="field-label">Lon</span>
+        <input type="number" step="any" id="wpLon" class="wp-coord-input">
+      </div>
+      <button type="button" id="wpUseGps" class="wp-use-gps" title="Gunakan posisi GPS saat ini" hidden>🛰 GPS</button>
+    </div>
+
+    <span class="field-label">Nama</span>
+    <input type="text" id="wpName" class="wp-text-input" placeholder="Contoh: Patok Batas 12" maxlength="80">
+
+    <span class="field-label">Kategori</span>
+    <div class="wp-category-grid" id="wpCategoryGrid"><!-- diisi oleh app.js --></div>
+
+    <span class="field-label">Warna Ikon</span>
+    <div class="wp-color-row">
+      <input type="color" id="wpColor" value="#D98A3D">
+      <span class="wp-color-hint">Warna pin di peta (bisa disesuaikan bebas dari warna kategori)</span>
+    </div>
+
+    <span class="field-label">Deskripsi</span>
+    <textarea id="wpDesc" class="wp-text-input" rows="3" placeholder="Catatan lapangan (opsional)…"></textarea>
+
+    <span class="field-label">Foto</span>
+    <div class="wp-photo-drop" id="wpPhotoDrop">
+      <input type="file" id="wpPhotoInput" accept="image/*" hidden>
+      <img id="wpPhotoPreview" alt="Foto waypoint" hidden>
+      <span class="wp-photo-placeholder" id="wpPhotoPlaceholder">🖼 Klik untuk tambah foto (opsional)</span>
+      <button type="button" id="wpPhotoRemove" class="wp-photo-remove" hidden>✕ Hapus foto</button>
+    </div>
+
+    <div class="modal-actions wp-modal-actions">
+      <button class="btn-ghost wp-delete-btn" id="wpBtnDelete" type="button" hidden>Hapus</button>
+      <span class="spacer"></span>
+      <button class="btn-ghost" id="wpCancel" type="button">Batal</button>
+      <button class="btn-add wp-save-btn" id="wpSave" type="button">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal titik kalibrasi (V4, baru) -->
+<div class="modal-backdrop" id="calModalBackdrop">
+  <div class="modal">
+    <h3 id="calModalTitle">Titik Kalibrasi 1</h3>
+    <p id="calModalDesc">Masukkan koordinat GPS sesungguhnya dari titik yang baru Anda tandai di peta.</p>
+    <div class="wp-coord-row">
+      <div>
+        <span class="field-label">Lat</span>
+        <input type="number" step="any" id="calLat" class="wp-coord-input">
+      </div>
+      <div>
+        <span class="field-label">Lon</span>
+        <input type="number" step="any" id="calLon" class="wp-coord-input">
+      </div>
+      <button type="button" id="calUseGps" class="wp-use-gps" title="Gunakan posisi GPS saat ini" hidden>🛰 GPS</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="calCancel" type="button">Batal</button>
+      <button class="btn-add" id="calConfirm" type="button">Lanjut</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal simpan track (V4, baru) -->
+<div class="modal-backdrop" id="trModalBackdrop">
+  <div class="modal">
+    <h3>Simpan Track</h3>
+    <p>Rekaman selesai. Beri nama track ini untuk disimpan ke penyimpanan lokal, atau buang jika tidak diperlukan.</p>
+    <span class="field-label">Nama Track</span>
+    <input type="text" id="trName" class="wp-text-input" placeholder="Contoh: Jalur Survei Blok A" maxlength="80">
+    <dl class="track-readout track-readout-modal">
+      <div><dt>Jarak</dt><dd id="trModalJarak">0 m</dd></div>
+      <div><dt>Waktu</dt><dd id="trModalWaktu">00:00</dd></div>
+    </dl>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="trDiscard" type="button">Buang</button>
+      <button class="btn-add" id="trSave" type="button">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/pdfmap.js"></script>
+<script src="js/map.js"></script>
+<script src="js/gps.js"></script>
+<script src="js/waypoint.js"></script>
+<script src="js/track.js"></script>
+<script src="js/measure.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
